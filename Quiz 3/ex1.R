@@ -1,7 +1,5 @@
 # Code Coursera 
 
-install.packages("rpart.plot")
-install.packages("rattle")
 library(AppliedPredictiveModeling)
 data(segmentationOriginal)
 library(caret)
