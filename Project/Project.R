@@ -1,8 +1,9 @@
 library(caret)
+library(foreach)
 
 # Getting the data and partitioning
-#setwd("D:/Mes documents/Coursera/Practical Machine Learning/Project")
-setwd("C:/Documents and Settings/jean-pierre.sylvan/Mes documents/Practical_ML/Project")
+setwd("D:/Mes documents/Coursera/Practical Machine Learning/Project")
+#setwd("C:/Documents and Settings/jean-pierre.sylvan/Mes documents/Practical_ML/Project")
 pml_training=read.csv(file="pml-training.csv",header=T,sep=,)
 pml_training=pml_training[,-1]
 pml_testing=read.csv(file="pml-testing.csv",header=T,sep=,)
@@ -40,13 +41,14 @@ modFit = train(training_classe~.,data=trainPC,method="rf")
 predict(modFit,newdata=testPC)
 confusionMatrix(testing_classe,predict(modFit,newdata=testPC))
 
-# Prédiction de classe sur la table pml_testing avec modFit
+# Pr?diction de classe sur la table pml_testing avec modFit
 pml_testing2=pml_testing[,(num_NA<0.9)&Num]
 pml_testing2PC=predict(pca,newdata=pml_testing2)
 predict(modFit,newdata=pml_testing2PC)
 
-# On peut aussi lancer le modèle sur la table entière, maintenant qu'on sait
-qu'il est valable
+# On peut aussi lancer le modele sur la table entiere, maintenant qu'on sait
+#qu'il est valable
+
 pml_training = read.csv(file="pml-training.csv",header=T,sep=,)
 pml_training=pml_training[,-1]
 table = pml_training[,Num & (num_NA<0.9)]
@@ -54,7 +56,7 @@ pca=preProcess(x=table,method="pca",thresh=0.9)
 trainPC = predict(pca,table)
 modFit = train(pml_training$classe~.,data=trainPC,method="rf")
 
-# Prédiction de classe sur la table pml_testing avec modFit
+# Prediction de classe sur la table pml_testing avec modFit
 pml_testing2=pml_testing[,(num_NA<0.9)&Num]
 pml_testing2PC=predict(pca,newdata=pml_testing2)
 predict(modFit,newdata=pml_testing2PC)
