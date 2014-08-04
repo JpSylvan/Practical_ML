@@ -1,0 +1,24 @@
+---
+title: "Practical Machine Learning Project"
+output: html_document
+---
+
+The purpose is to predict the variable classe with all the features given by Coursera.
+There is a training and a testing data set. The testing data set doesn't contain the variable class, 
+so it cannot be use as a test subset. It is only for the purpose of submission. 
+
+First 
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
