@@ -1,5 +1,4 @@
 # Code Coursera 
-install.packages("pgmm")
 library(pgmm)
 data(olive)
 olive = olive[,-1]
