@@ -74,19 +74,19 @@ library(doParallel)</code></pre>
 <pre class="r"><code># Getting the data and partitioning
 setwd(&quot;D:/Mes documents/Coursera/Practical Machine Learning/Project&quot;)
 #setwd(&quot;C:/Documents and Settings/jean-pierre.sylvan/Mes documents/Practical_ML/Project&quot;)
-pml_training=read.csv(file=&quot;pml-training.csv&quot;,header=T,sep=,)
-pml_training=pml_training[,-1]
-pml_testing=read.csv(file=&quot;pml-testing.csv&quot;,header=T,sep=,)
-pml_testing=pml_testing[,-1]</code></pre>
+pml_training = read.csv(file=&quot;pml-training.csv&quot;,header=T,sep=,)
+pml_training = pml_training[,-1]
+pml_testing = read.csv(file=&quot;pml-testing.csv&quot;,header=T,sep=,)
+pml_testing = pml_testing[,-1]</code></pre>
 <p>We don’t need to create a training/testing partition since it will be made automatically (several times) by the train function to which we give the cross-validation method in the trControl argument.</p>
 <p>Then we analyse the data and see that all the factor variables are empty, so we want to remove them. To do that we create a that gives us the class of every variable of the training table. We will use it later to get rid of the factor variables.</p>
-<pre class="r"><code>Type=character(dim(pml_training)[2])
+<pre class="r"><code>Type = character(dim(pml_training)[2])
 for (i in 1:length(Type)) {
   Type[i] = class(pml_training[,i])
 }
 Num = (Type == &quot;numeric&quot;)|(Type == &quot;integer&quot;)</code></pre>
 <p>In the other variables we see that many of them have a lot of missing data. We want to get rid of them because they give to information on the output. We create a vector telling us how many NA (in proportion) there is in every variable.</p>
-<pre class="r"><code>num_NA=vector(mode=&quot;numeric&quot;,length=dim(pml_training)[2])
+<pre class="r"><code>num_NA = vector(mode=&quot;numeric&quot;,length=dim(pml_training)[2])
 for (i in 1:length(num_NA)) {
   num_NA[i] = mean(is.na(pml_training[,i]))
 }</code></pre>
@@ -94,7 +94,7 @@ for (i in 1:length(num_NA)) {
 <pre class="r"><code>pml_training2 = pml_training[,Num &amp; (num_NA&lt;0.9)]</code></pre>
 <p>Now we are almost ready to begin the study. We want to use a Random Forest Algorithm on the training dataset we created (with 75% of the table) and try it on the testing dataset. But this algorithm takes a lot of time and memory, and there are to many features. We don’t even know if they are all useful, maybe they are highly correlated for instance.</p>
 <p>So we do a principal component analysis firtst in order to reduce the number of variables.</p>
-<pre class="r"><code>pca=preProcess(x=pml_training2,method=&quot;pca&quot;,thresh=0.9)
+<pre class="r"><code>pca = preProcess(x=pml_training2,method=&quot;pca&quot;,thresh=0.9)
 pca</code></pre>
 <pre><code>## 
 ## Call:
@@ -105,7 +105,8 @@ pca</code></pre>
 ## 
 ## PCA needed 20 components to capture 90 percent of the variance</code></pre>
 <pre class="r"><code>trainPC = predict(pca,pml_training2)</code></pre>
-<p>We see that 20 components are enough to catch 90% of the variance. We use the “rf” method of the train function (caret package).</p>
+<p>We see that 20 components are enough to catch 90% of the variance.</p>
+<p>We use the “rf” method of the train function (caret package). Warning : it takes time and cpu to run.</p>
 <pre class="r"><code>cv = trainControl(method=&quot;cv&quot;)
 modFit = train(pml_training$classe~.,data=trainPC,method=&quot;rf&quot;,trControl=cv)</code></pre>
 <pre><code>## Loading required package: randomForest
@@ -134,6 +135,20 @@ modFit = train(pml_training$classe~.,data=trainPC,method=&quot;rf&quot;,trContro
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 2.</code></pre>
 <p>We see that in the 3 cross-validation that have been made, the accuracy is between 97% and 99%. This means the out-of-sample error is between 1% and 3%, which is good enough to submit our results.</p>
+<p>We can then apply the model on the 20 obs given by Coursera in the pml_testing table</p>
+<pre class="r"><code>pml_testing2 = pml_testing[,(num_NA&lt;0.9)&amp;Num]
+pml_testing2PC = predict(pca,newdata=pml_testing2)
+results = predict(modFit,newdata=pml_testing2PC)</code></pre>
+<p>We print the results in 20 .txt files with the function given by Coursera</p>
+<pre class="r"><code>pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(results)</code></pre>
 </div>
 
 

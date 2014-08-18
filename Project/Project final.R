@@ -28,7 +28,7 @@ pml_training2 = pml_training[,Num & (num_NA<0.9)]
 
 #Preprocessing of the data with PCA
 pca=preProcess(x=pml_training2,method="pca",thresh=0.9)
-trainPC = predict(pca,plm_training2)
+trainPC = predict(pca,pml_training2)
 
 #Random Forest with Cross-Validation to see if the model based on a training set applies to a testing set
 cv = trainControl(method="cv")
@@ -39,3 +39,13 @@ pml_testing2=pml_testing[,(num_NA<0.9)&Num]
 pml_testing2PC=predict(pca,newdata=pml_testing2)
 predict(modFit,newdata=pml_testing2PC)
 
+#Printing of the results in 20 .txt files with the function given by Coursera 
+pml_write_files = function(x){
+    n = length(x)
+    for(i in 1:n){
+        filename = paste0("problem_id_",i,".txt")
+        write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+    }
+}
+
+pml_write_files(results)
