@@ -3,22 +3,101 @@ title: "Practical Machine Learning Project"
 output: html_document
 ---
 
-The purpose is to predict the variable classe with all the features given by Coursera.
-There is a training and a testing data set. The testing data set doesn't contain the variable class, 
-so it cannot be use as a test subset. It is only for the purpose of submission. 
+##Purpose
 
-First 
+The goal is to predict the variable classe with all the features given by the Coursera table
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+##Code explanation
+
+First we need to load some libraries 
 
 ```{r}
-summary(cars)
+library(caret)
+library(foreach)
+library(doParallel)
 ```
 
-You can also embed plots, for example:
+First we read the data. There is a training and a testing data set. 
+The testing data set doesn't contain the variable class, 
+so it cannot be use as a test subset. It is only for the purpose of submission. 
 
-```{r, echo=FALSE}
-plot(cars)
+```{r}
+# Getting the data and partitioning
+setwd("D:/Mes documents/Coursera/Practical Machine Learning/Project")
+#setwd("C:/Documents and Settings/jean-pierre.sylvan/Mes documents/Practical_ML/Project")
+pml_training=read.csv(file="pml-training.csv",header=T,sep=,)
+pml_training=pml_training[,-1]
+pml_testing=read.csv(file="pml-testing.csv",header=T,sep=,)
+pml_testing=pml_testing[,-1]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We don't need to create a training/testing partition since it will be made automatically (several times) by the train function to which we give the cross-validation method in the trControl argument.
+
+Then we analyse the data and see that all the factor variables are empty, so we want to remove them.
+To do that we create a that gives us the class of every variable of the training table.
+We will use it later to get rid of the factor variables.
+
+```{r}
+Type=character(dim(pml_training)[2])
+for (i in 1:length(Type)) {
+  Type[i] = class(pml_training[,i])
+}
+Num = (Type == "numeric")|(Type == "integer")
+```
+
+In the other variables we see that many of them have a lot of missing data. We want to get rid of them because they
+give to information on the output. 
+We create a vector telling us how many NA (in proportion) there is in every variable.
+
+```{r}
+num_NA=vector(mode="numeric",length=dim(pml_training)[2])
+for (i in 1:length(num_NA)) {
+  num_NA[i] = mean(is.na(pml_training[,i]))
+}
+```
+
+We get rid of these variables
+
+```{r}
+pml_training2 = pml_training[,Num & (num_NA<0.9)]
+```
+
+Now we are almost ready to begin the study.
+We want to use a Random Forest Algorithm on the training dataset we created (with 75% of the table) and try it on the testing
+dataset. But this algorithm takes a lot of time and memory, and there are to many features. We don't even know if they are
+all useful, maybe they are highly correlated for instance.
+
+So we do a principal component analysis firtst in order to reduce the number of variables.
+
+```{r}
+pca=preProcess(x=pml_training2,method="pca",thresh=0.9)
+pca
+trainPC = predict(pca,pml_training2)
+```
+
+We see that 20 components are enough to catch 90% of the variance. 
+
+We use the "rf" method of the train function (caret package). 
+Warning : it takes time and cpu to run.
+
+```{r}
+cv = trainControl(method="cv")
+modFit = train(pml_training$classe~.,data=trainPC,method="rf",trControl=cv)
+```
+
+Let's see if the model is good enough.
+
+```{r}
+modFit
+```
+
+We see that in the 3 cross-validation that have been made, the accuracy is between 97% and 99%. 
+This means the out-of-sample error is between 1% and 3%, which is good enough to submit our results.
+
+We can then apply the model on the 20 obs given by Coursera in the pml_testing table
+
+```{r}
+pml_testing2=pml_testing[,(num_NA<0.9)&Num]
+pml_testing2PC=predict(pca,newdata=pml_testing2)
+predict(modFit,newdata=pml_testing2PC)
+```
